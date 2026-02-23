@@ -40,7 +40,7 @@ DEFAULT_DELAY_PRESETS = {
 # UI Constants
 WINDOW_TITLE = "CSV Email Sender (Tkinter)"
 WINDOW_WIDTH = 700
-WINDOW_HEIGHT = 950
+WINDOW_HEIGHT = 1050
 LOG_FONT = ("Courier", 9)
 
 # Progress update interval (ms)
