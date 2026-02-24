@@ -1,0 +1,111 @@
+name: Build Windows Executable
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Windows EXE
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Get version
+        id: version
+        run: |
+          if ("${{ github.ref }}" -like "refs/tags/*") {
+            $version = "${{ github.ref }}" -replace "refs/tags/", ""
+            echo "version=$version" >> $env:GITHUB_OUTPUT
+            echo "version_tag=$version" >> $env:GITHUB_OUTPUT
+          } else {
+            $version = "dev-" + "${{ github.sha }}".Substring(0, 7)
+            echo "version=$version" >> $env:GITHUB_OUTPUT
+            echo "version_tag=latest" >> $env:GITHUB_OUTPUT
+          }
+        shell: pwsh
+
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller --name="CSV-Email-Sender" `
+            --onefile `
+            --windowed `
+            --icon=NONE `
+            --add-data="config.py;." `
+            --add-data="csv_parser.py;." `
+            --add-data="email_sender.py;." `
+            --hidden-import=tkinter `
+            --hidden-import=openpyxl `
+            --hidden-import=ssl `
+            --hidden-import=smtplib `
+            --hidden-import=email `
+            --hidden-import=email.mime `
+            --hidden-import=email.mime.text `
+            --hidden-import=email.mime.multipart `
+            --hidden-import=email.mime.application `
+            --hidden-import=email.utils `
+            --hidden-import=queue `
+            --hidden-import=threading `
+            --hidden-import=random `
+            --hidden-import=time `
+            --hidden-import=os `
+            --hidden-import=csv `
+            --clean `
+            --noconfirm `
+            main.py
+
+      - name: Rename executable with version
+        run: |
+          mv "dist\CSV-Email-Sender.exe" "dist\CSV-Email-Sender-${{ steps.version.outputs.version }}.exe"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CSV-Email-Sender-Windows
+          path: dist\CSV-Email-Sender-${{ steps.version.outputs.version }}.exe
+          retention-days: 30
+
+      - name: Create Release (on tags only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist\CSV-Email-Sender-${{ steps.version.outputs.version }}.exe
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build summary
+        run: |
+          echo "### Build Completed :rocket:" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ steps.version.outputs.version }}" >> $env:GITHUB_STEP_SUMMARY
+          echo "- **Executable:** CSV-Email-Sender-${{ steps.version.outputs.version }}.exe" >> $env:GITHUB_STEP_SUMMARY
+          echo "- **Python:** 3.11" >> $env:GITHUB_STEP_SUMMARY
+          echo "- **Size:** $(( (Get-Item "dist\CSV-Email-Sender-${{ steps.version.outputs.version }}.exe").Length / 1MB )) MB" >> $env:GITHUB_STEP_SUMMARY
+        shell: pwsh

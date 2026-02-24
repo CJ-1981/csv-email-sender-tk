@@ -22,7 +22,7 @@ class EmailSenderApp:
         self.root = root
         self.root.title(WINDOW_TITLE)
         self.root.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
-        self.root.resizable(False, False)
+        self.root.resizable(True, True)
         
         # State variables
         self.csv_file_path = tk.StringVar()
@@ -74,8 +74,9 @@ class EmailSenderApp:
         # Section 4: Send Emails
         row = self._create_send_section(main_frame, row)
         
-        # Configure grid weights
+        # Configure grid weights for resizing
         self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(0, weight=1)
     
     def _create_file_section(self, parent, start_row):
