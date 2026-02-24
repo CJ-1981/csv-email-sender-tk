@@ -4,6 +4,9 @@ A simple Python desktop application for sending bulk emails via SMTP. Upload a C
 
 **Cross-platform**: Works on Windows, macOS, and Linux
 
+<img width="702" height="985" alt="image" src="https://github.com/user-attachments/assets/1754e098-2d15-4a8f-984d-209cca133182" />
+
+
 ## Features
 
 - **Simple SMTP Authentication**: No OAuth setup required - just use your email credentials
